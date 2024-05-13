@@ -4,7 +4,12 @@ import '@mantine/notifications/styles.css';
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { localStorageColorSchemeManager, Button, Group, MantineProvider } from '@mantine/core';
+import {
+  localStorageColorSchemeManager,
+  Button,
+  Group,
+  MantineProvider,
+} from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { notifications } from '@mantine/notifications';
 
@@ -16,6 +21,9 @@ import { PERSONAS } from './data';
 const volume = parseFloat(localStorage.getItem('volume') || '1');
 const wpm = parseInt(localStorage.getItem('wpm') || '25');
 const farnsworth = parseInt(localStorage.getItem('farnsworth') || '5');
+
+if (new URLSearchParams(document.location.search).has('clearLocalStorage'))
+  window.localStorage.clear();
 
 const audio = new Audio(volume);
 const keyer = new Keyer(audio, wpm, farnsworth);
@@ -32,10 +40,14 @@ notifications.show({
   radius: 'lg',
   title: PERSONAS.elmer.name,
   autoClose: false,
-  message: (<Group gap="xl">
-            Welcome! I'm here to help you learn morse code.
-              <Button size="compact-xs" onClick={() => console.log('Tour')}>Take a tour</Button>
-            </Group>),
+  message: (
+    <Group gap="xl">
+      Welcome! I&apos;m here to help you learn morse code.
+      <Button size="compact-xs" onClick={() => console.log('Tour')}>
+        Take a tour
+      </Button>
+    </Group>
+  ),
 });
 
 ReactDOM.createRoot(document.getElementById('root')).render(

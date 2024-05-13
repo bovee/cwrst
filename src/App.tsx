@@ -1,5 +1,5 @@
 import { Carousel } from '@mantine/carousel';
-import { Button, Center, Container, Flex, Switch } from '@mantine/core';
+import { Button, Center, Container, Flex } from '@mantine/core';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 
@@ -29,15 +29,10 @@ export default function App(props: { audio: Audio; keyer: Keyer }) {
   const [mobileStart, setMobileStart] = useState(
     'ontouchstart' in document.documentElement,
   );
-  const [station, setStation] = useLocalStorage('station', 'test');
+  const [station] = useLocalStorage('station', 'test');
   const [currentGuess, setCurrentGuess] = useState(['', 0]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [keyType] = useLocalStorage('key-type', 'straight');
-
-  const keyTest = () => {
-    setCurrentMessage('hello');
-    props.keyer.keyPartnerMessage('hello');
-  };
 
   const handleKeypress = useCallback(
     letter => {
@@ -186,8 +181,6 @@ export default function App(props: { audio: Audio; keyer: Keyer }) {
       </Container>
       <br />
       <Container size="sm">{key}</Container>
-      <br />
-      <Button onClick={() => keyTest()} />
     </>
   );
 }

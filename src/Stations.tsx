@@ -1,25 +1,52 @@
-import { SegmentedControl, Slider } from '@mantine/core';
+import { Checkbox, Flex, SegmentedControl } from '@mantine/core';
 import { useLocalStorage } from 'usehooks-ts';
-
-const LCWO_LETTERS = 'kmuresnaptlwi.jz=foy,vg5/q92h38b?47c1d60x';
-const HOLECEK_DROID_LETTERS =
-  'etimansorkdugwhpxbflvczjqy1234567890.,:?\'-/()"=+@';
-const FINLEY_LETTERS = 'kmrsuaptlowi.njef0y,vg5/q9zh38b?427c1d6x';
+import { LCWO_LETTERS } from './Display';
 
 export function StationPane() {
-  let [station, setStation] = useLocalStorage('station', 'test');
+  const [progress, setProgress] = useLocalStorage('learning-progress', {
+    training: 'kmur',
+    letters: {},
+    daily: [],
+  });
+  const [station, setStation] = useLocalStorage('station', 'test');
 
   let description = '';
+  let controls = <></>;
   if (station === 'test') description = 'Practice sending with the keys.';
-  if (station === 'copy') description = 'Practice receiving copy.';
+  if (station === 'copy') {
+    description = 'Practice receiving copy.';
+    const boxes = [];
+    for (const letter of LCWO_LETTERS) {
+      boxes.push(
+        <Checkbox
+          key={letter}
+          label={letter}
+          checked={progress.training.indexOf(letter) > -1}
+          onChange={(evt: React.ChangeEvent<HTMLInputElement>) => {
+            const loc = progress.training.indexOf(letter);
+            console.log(evt.currentTarget.checked, loc);
+            if (evt.currentTarget.checked && loc === -1) {
+              progress.training += letter;
+            } else if (!evt.currentTarget.checked) {
+              progress.training =
+                progress.training.slice(0, loc) +
+                progress.training.slice(loc + 1);
+            }
+            setProgress(progress);
+          }}
+        />,
+      );
+    }
+    controls = (
+      <Flex gap="md" wrap="wrap">
+        {' '}
+        {boxes}{' '}
+      </Flex>
+    );
+  }
   if (station === 'listen') description = 'Listen to text.';
   if (station === 'txPractice') description = 'Initiate a QSO.';
   if (station === 'rxPractice') description = 'Respond to a QSO.';
-
-  const marks = LCWO_LETTERS.split('').map((letter, ix) => ({
-    value: ix,
-    label: letter,
-  }));
 
   return (
     <>
@@ -37,12 +64,7 @@ export function StationPane() {
       />
       <br />
       {description}
-      <Slider
-        defaultValue={0}
-        max={40}
-        label={val => marks.find(mark => mark.value === val)!.label}
-        marks={marks}
-      />
+      {controls}
     </>
   );
 }

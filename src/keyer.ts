@@ -210,7 +210,7 @@ export class Keyer {
 
   keyLetter(letter: string, primary: boolean = true) {
     if (this.timeoutGap) clearTimeout(this.timeoutGap);
-    let code = MORSE_MAP[letter.toLowerCase()]
+    let code = MORSE_MAP[letter.toLowerCase()];
     if (letter === ' ') code = ' ';
     const delay = this.audio.key(
       code,

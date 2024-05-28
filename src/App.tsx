@@ -1,18 +1,19 @@
 import { Carousel } from '@mantine/carousel';
 import { Button, Center, Container, Flex } from '@mantine/core';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 
-import { Audio } from './audio';
 import { Keyer } from './keyer';
-import { msg } from './messages';
+import { handleKeyedChar } from './learning';
+import { useStateContext } from './state';
 import { Display } from './Display';
+import { Key } from './Key';
 import { SettingsPane } from './Settings';
 import { StationPane } from './Stations';
 
 import styleClasses from './App.module.css';
 
-function Key(props: {
+function LetterKey(props: {
   letter: string;
   handleKeypress: (letter: string) => void;
 }) {
@@ -25,24 +26,24 @@ function Key(props: {
 
 const LETTERS: string = 'abcdefghijklmnopqrstuvwxyz0123456789.,?=/';
 
-export default function App(props: { audio: Audio; keyer: Keyer }) {
-  const [mobileStart, setMobileStart] = useState(
-    'ontouchstart' in document.documentElement,
-  );
+export default function App(props: { keyer: Keyer }) {
   const [station] = useLocalStorage('station', 'test');
-  const [currentGuess, setCurrentGuess] = useState(['', 0]);
-  const [currentMessage, setCurrentMessage] = useState('');
-  const [keyType] = useLocalStorage('key-type', 'straight');
+  const { dispatch, state } = useStateContext();
+
+  const { keyer } = props;
 
   const handleKeypress = useCallback(
-    letter => {
+    (letter: string) => {
       if (station === 'copy' || station === 'rxPractice') {
-        setCurrentGuess([letter.toLowerCase(), props.keyer.currentTime]);
+        dispatch({
+          type: 'setCurrentGuess',
+          guess: [letter.toLowerCase(), keyer.currentTime],
+        });
       } else {
-        props.keyer.keyLetter(letter);
+        keyer.keyLetter(letter);
       }
     },
-    [station, props.keyer],
+    [dispatch, station, keyer],
   );
 
   useEffect(() => {
@@ -52,113 +53,27 @@ export default function App(props: { audio: Audio; keyer: Keyer }) {
       handleKeypress(evt.key);
     };
 
+    keyer.attach((chr, primary) => {
+      handleKeyedChar(chr, primary, station, keyer, state, dispatch);
+    });
+
     window.addEventListener('keypress', handleKeypressEvt);
     return () => {
+      keyer.detach();
       window.removeEventListener('keypress', handleKeypressEvt);
     };
-  }, [currentGuess, handleKeypress]);
+  }, [dispatch, handleKeypress, keyer, state, station]);
 
   const keys = LETTERS.split('').map(letter => (
-    <Key key={letter} letter={letter} handleKeypress={handleKeypress} />
+    <LetterKey key={letter} letter={letter} handleKeypress={handleKeypress} />
   ));
-
-  let key;
-  if (keyType === 'straight') {
-    key = (
-      <Button
-        fullWidth
-        onMouseDown={() => props.keyer.straightKeyDown()}
-        onMouseUp={() => props.keyer.straightKeyUp()}
-        onClick={() => {
-          if (mobileStart) {
-            props.audio.start();
-            setMobileStart(false);
-          }
-        }}
-        onTouchStart={() => {
-          if (!mobileStart) props.keyer.straightKeyDown();
-        }}
-        onTouchEnd={() => {
-          if (!mobileStart) props.keyer.straightKeyUp();
-        }}
-        size="lg"
-      >
-        {mobileStart ? `${msg('CLICK_TO')} ${msg('ENABLE')}` : ''}
-      </Button>
-    );
-  } else {
-    const ditKey = (
-      <Button
-        fullWidth
-        color="cyan"
-        size="lg"
-        onMouseDown={() => props.keyer.paddleDown(true, false)}
-        onMouseUp={() => props.keyer.paddleUp()}
-        onClick={() => {
-          if (mobileStart) {
-            props.audio.start();
-            setMobileStart(false);
-          }
-        }}
-        onTouchStart={() => {
-          if (!mobileStart) props.keyer.paddleDown(true, false);
-        }}
-        onTouchEnd={() => {
-          if (!mobileStart) props.keyer.paddleUp();
-        }}
-      >
-        {mobileStart
-          ? keyType === 'paddle'
-            ? msg('CLICK_TO')
-            : msg('ENABLE')
-          : '•'}
-      </Button>
-    );
-    key = (
-      <Button.Group>
-        {keyType === 'paddle' ? ditKey : ''}
-        <Button
-          fullWidth
-          size="lg"
-          onMouseDown={() => props.keyer.paddleDown(false, true)}
-          onMouseUp={() => props.keyer.paddleUp()}
-          onClick={() => {
-            if (mobileStart) {
-              props.audio.start();
-              setMobileStart(false);
-            }
-          }}
-          onTouchStart={() => {
-            if (!mobileStart) props.keyer.paddleDown(false, true);
-          }}
-          onTouchEnd={() => {
-            if (!mobileStart) props.keyer.paddleUp();
-          }}
-        >
-          {mobileStart
-            ? keyType === 'reverse'
-              ? msg('CLICK_TO')
-              : msg('ENABLE')
-            : '–'}
-        </Button>
-        {keyType === 'reverse' ? ditKey : ''}
-      </Button.Group>
-    );
-  }
 
   return (
     <>
       <h1>CW RST</h1>
       <Container size="sm">
         <Center>
-          <Display
-            audio={props.audio}
-            keyer={props.keyer}
-            currentGuess={currentGuess}
-            currentMessage={currentMessage}
-            setCurrentGuess={setCurrentGuess}
-            setCurrentMessage={setCurrentMessage}
-          />
+          <Display keyer={keyer} />
         </Center>
       </Container>
       <br />
@@ -175,12 +90,14 @@ export default function App(props: { audio: Audio; keyer: Keyer }) {
             </Center>
           </Carousel.Slide>
           <Carousel.Slide>
-            <SettingsPane audio={props.audio} keyer={props.keyer} />
+            <SettingsPane keyer={keyer} />
           </Carousel.Slide>
         </Carousel>
       </Container>
       <br />
-      <Container size="sm">{key}</Container>
+      <Container size="sm">
+        <Key keyer={keyer} />
+      </Container>
     </>
   );
 }

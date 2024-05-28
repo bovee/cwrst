@@ -1,6 +1,7 @@
 import { Audio } from './audio';
 
 export const MORSE_MAP = {
+  ' ': ' ',
   a: '.-',
   b: '-...',
   c: '-.-.',
@@ -57,7 +58,7 @@ const REV_MORSE_MAP = Object.fromEntries(
 );
 
 export class Keyer {
-  audio: Audio;
+  public audio: Audio;
   ditPaddleDown: boolean = false;
   datPaddleDown: boolean = false;
   spaceDown?: number = null;
@@ -210,8 +211,8 @@ export class Keyer {
 
   keyLetter(letter: string, primary: boolean = true) {
     if (this.timeoutGap) clearTimeout(this.timeoutGap);
-    let code = MORSE_MAP[letter.toLowerCase()];
-    if (letter === ' ') code = ' ';
+    const code = MORSE_MAP[letter.toLowerCase()];
+    if (typeof code === 'undefined') return;
     const delay = this.audio.key(
       code,
       this.ditLen,

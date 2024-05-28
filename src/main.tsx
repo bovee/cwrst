@@ -10,51 +10,52 @@ import {
   Group,
   MantineProvider,
 } from '@mantine/core';
+import { StateProvider } from './state';
 import { Notifications } from '@mantine/notifications';
-import { notifications } from '@mantine/notifications';
 
 import App from './App';
 import { Audio } from './audio';
 import { Keyer } from './keyer';
-import { PERSONAS } from './data';
+import { notify } from './personas';
+
+if (new URLSearchParams(document.location.search).has('clearLocalStorage'))
+  window.localStorage.clear();
 
 const volume = parseFloat(localStorage.getItem('volume') || '1');
 const wpm = parseInt(localStorage.getItem('wpm') || '25');
 const farnsworth = parseInt(localStorage.getItem('farnsworth') || '5');
 
-if (new URLSearchParams(document.location.search).has('clearLocalStorage'))
-  window.localStorage.clear();
-
 const audio = new Audio(volume);
 const keyer = new Keyer(audio, wpm, farnsworth);
+
+declare global {
+  interface Window {
+    keyer: Keyer;
+  }
+}
 window.keyer = keyer;
 
 const colorSchemeManager = localStorageColorSchemeManager({
   key: 'colorscheme',
 });
 
-notifications.show({
-  icon: PERSONAS.elmer.icon,
-  styles: { icon: { fontSize: '32px' } },
-  color: 'transparent',
-  radius: 'lg',
-  title: PERSONAS.elmer.name,
-  autoClose: false,
-  message: (
-    <Group gap="xl">
-      Welcome! I&apos;m here to help you learn morse code.
-      <Button size="compact-xs" onClick={() => console.log('Tour')}>
-        Take a tour
-      </Button>
-    </Group>
-  ),
-});
+notify(
+  'elmer',
+  <Group gap="xl">
+    Welcome! I&apos;m here to help you learn morse code.
+    <Button size="compact-xs" onClick={() => console.log('Tour')}>
+      Take a tour
+    </Button>
+  </Group>,
+);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <MantineProvider colorSchemeManager={colorSchemeManager}>
-    <Notifications />
-    <React.StrictMode>
-      <App audio={audio} keyer={keyer} />
-    </React.StrictMode>
+    <StateProvider>
+      <Notifications />
+      <React.StrictMode>
+        <App keyer={keyer} />
+      </React.StrictMode>
+    </StateProvider>
   </MantineProvider>,
 );

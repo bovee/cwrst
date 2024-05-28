@@ -8,11 +8,10 @@ import {
 } from '@mantine/core';
 import { useLocalStorage } from 'usehooks-ts';
 
-import { Audio } from './audio';
 import { Keyer } from './keyer';
 import { msg } from './messages';
 
-export function SettingsPane(props: { keyer: Keyer; audio: Audio }) {
+export function SettingsPane(props: { keyer: Keyer }) {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const [keyType, setKeyType] = useLocalStorage('key-type', 'straight');
 
@@ -38,8 +37,8 @@ export function SettingsPane(props: { keyer: Keyer; audio: Audio }) {
           max={10}
           step={1}
           label={(v: number) => `${v}`}
-          defaultValue={props.audio.volume}
-          onChangeEnd={val => (props.audio.volume = val)}
+          defaultValue={props.keyer.audio.volume}
+          onChangeEnd={val => (props.keyer.audio.volume = val)}
         />
         <Text size="sm">{msg('KEY')}</Text>
         <NativeSelect

@@ -10,6 +10,7 @@ import { Keyer, MORSE_MAP } from './keyer';
 import { completeLesson, startCopyTraining } from './learning';
 
 export interface State {
+  copyMode: string;
   currentGuess: [string, number];
   currentLesson: CurrentLesson;
   currentMessage: string;
@@ -26,6 +27,7 @@ export interface Action {
   keyer?: Keyer;
   lesson?: CurrentLesson;
   message?: string;
+  mode?: string;
   pos?: number;
   progress?: Progress;
   trainLetter?: [string, boolean];
@@ -59,11 +61,13 @@ export function initialState(): State {
   const displayText = Array.from({ length: 32 }, (_: number, i: number) => (
     <span key={i}>&nbsp;</span>
   ));
+  const copyMode = localStorage.getItem('copy-mode') || '5x5';
   const progress = JSON.parse(
     localStorage.getItem('learning-progress') ||
       '{"training":"kmur","letters":{},"daily":[]}',
   );
   return {
+    copyMode,
     currentGuess: ['', 0],
     currentLesson: {},
     currentMessage: '',
@@ -97,6 +101,10 @@ export function stateReducer(state: State, action: Action): State {
     case 'completeLesson':
       completeLesson(state);
       break;
+    case 'setCopyMode':
+      state.copyMode = action.mode;
+      localStorage.setItem('copy-mode', action.mode);
+      break
     case 'setCurrentGuess':
       state.currentGuess = action.guess;
       break;

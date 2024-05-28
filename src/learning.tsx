@@ -79,15 +79,39 @@ export function handleKeyedChar(chr, primary, station, keyer, state, dispatch) {
   }
 }
 
+// Combined from Chapter 4 of https://www.mikeandkey.org/docs/The_Art_and_Skill_of_Radio_Telegraphy-3rd-edition.pdf
+// and http://www.4sqrp.com/resource/w0xi/w0xi-100/most_common.html
+// and https://www.hamradioqrp.com/2016/11/get-used-to-common-stuff.html
+const COMMON_WORDS: string[] = '* + . / 359 479 489 559 579 589 599 73 = ? a about age agn alinco all am an and ant any ar are as at be beam been before bk bt but by can clear cloudy cold collins come cool could cq cw digital dipole do dont dx efhw elecraft es every fb first fog for from g5rv ga ge gm go great had hail has have he heathkit her hi him his hot hour how hr hw hw? i icom if in into inv is it its jt65 just kn know knwd like little lsb made man may me mean men more must my name no not now nr ocf of oh om on one only or other our out over people pse psk psk31 pwr qrl qrm qrn qrp qrq qrs qrz qsb qsy qth r rain really rig right rst rtu said say shall she should sk sleet sloper snow so some ssb such sunny swr temp tentec test that thats the their them then there these they think this time tnx to tu two uh up upon us usb v vertical very warm was we well were what when where which who will windom windy with work would wx yaesu yeah you your yrs'.split(' ');
+
 export function startCopyTraining(keyer: Keyer, state: State) {
   let testMessage = '';
 
-  // FIXME: set back to 25
-  for (let i = 0; i < 4; i++) {
-    if (i && i % 5 === 0) testMessage += ' ';
-    testMessage += state.progress.training.charAt(
-      Math.floor(Math.random() * state.progress.training.length),
-    );
+  switch (state.copyMode) {
+    case '5x5': 
+      for (let i = 0; i < 25; i++) {
+        if (i && i % 5 === 0) testMessage += ' ';
+        testMessage += state.progress.training.charAt(
+          Math.floor(Math.random() * state.progress.training.length),
+        );
+      }
+      break;
+    case 'common-words':
+      // filter to words containing the current training characters
+      const chars = new Set(state.progress.training);
+      const words = COMMON_WORDS.filter(word => {
+        for (const char of word) {
+          if (!chars.has(char)) return false;
+        }
+        return true;
+      });
+      // TODO: notify the user that there aren't any valid words to test
+      if (!words.length) break;
+
+      for (let i = 0; i < 5; i++) {
+        testMessage += words[Math.floor(Math.random() * words.length)] + ' ';
+      }
+      break;
   }
 
   keyer.keyPartnerMessage(testMessage);

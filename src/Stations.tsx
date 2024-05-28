@@ -3,6 +3,7 @@ import {
   Checkbox,
   FileInput,
   Flex,
+  NativeSelect,
   SegmentedControl,
 } from '@mantine/core';
 import { useState } from 'react';
@@ -41,8 +42,16 @@ export function StationPane() {
     ));
     controls = (
       <Flex gap="md" wrap="wrap">
-        {' '}
-        {boxes}{' '}
+        {boxes}
+        <br />
+        <NativeSelect
+          value={state.copyMode}
+          onChange={evt => dispatch({ type: 'setCopyMode', mode: evt.currentTarget.value })}
+          data={[
+            { label: '5x5', value: '5x5' },
+            { label: 'Common Words', value: 'common-words' },
+          ]}
+        />
       </Flex>
     );
   }
